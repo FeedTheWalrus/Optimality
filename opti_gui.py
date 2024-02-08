@@ -56,7 +56,7 @@ class OTTableWindow(QMainWindow):
         inputLayout.addWidget(self.winnerSelection)
 
         # Table for Winners/Losers table
-        self.tableWidget_2 = QTableWidget(self)
+        self.tableWidget_WL = QTableWidget(self)
         self.updateWLTable()
 
         # Update Table button
@@ -72,7 +72,7 @@ class OTTableWindow(QMainWindow):
         mainLayout.addLayout(constraintsLayout)
         mainLayout.addWidget(updateTableButton)
         mainLayout.addWidget(self.tableWidget)
-        mainLayout.addWidget(self.tableWidget_2)
+        mainLayout.addWidget(self.tableWidget_WL)
         mainLayout.addWidget(clearTableButton)
 
         # Set the layout
@@ -88,6 +88,7 @@ class OTTableWindow(QMainWindow):
             self.winnerSelection.clear()
             self.winnerSelection.addItems(self.outputWords)
         self.updateTable()
+        self.updateWLTable()
 
     def updateSelectedConstraints(self, state):
         sender = self.sender()
@@ -98,20 +99,24 @@ class OTTableWindow(QMainWindow):
             if sender.text() in self.selected_constraints:
                 self.selected_constraints.remove(sender.text())
         self.updateTable()
+        self.updateWLTable()
 
     def clearTable(self):
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
+        self.tableWidget_WL.clearContents()
+        self.tableWidget_WL.setRowCount(0)
         self.output_words = []
+    
 
     def updateWLTable(self):
         # Set table dimensions
-        self.tableWidget_2.setRowCount(len(self.outputWords))
-        self.tableWidget_2.setColumnCount(len(self.selected_constraints) + 2)  # Additional columns for input and output words
+        self.tableWidget_WL.setRowCount(len(self.outputWords))
+        self.tableWidget_WL.setColumnCount(len(self.selected_constraints) + 2)  # Additional columns for input and output words
 
         # Set table headers
         headers = ["Winner", "Loser"] + self.selected_constraints
-        self.tableWidget_2.setHorizontalHeaderLabels(headers)
+        self.tableWidget_WL.setHorizontalHeaderLabels(headers)
 
         selected_winner = self.winnerSelection.currentText()
 
@@ -121,8 +126,8 @@ class OTTableWindow(QMainWindow):
             else:
                 winner_label = "Loser"
 
-            self.tableWidget_2.setItem(i, 0, QTableWidgetItem(winner_label))
-            self.tableWidget_2.setItem(i, 1, QTableWidgetItem(output_word))
+            self.tableWidget_WL.setItem(i, 0, QTableWidgetItem(winner_label))
+            self.tableWidget_WL.setItem(i, 1, QTableWidgetItem(output_word))
 
             # Determine whether the constraint favours the winner (input) or loser (output), for each constraint
             for j, constraint_name in enumerate(self.selected_constraints, start=2):
@@ -141,9 +146,9 @@ class OTTableWindow(QMainWindow):
                     raise ValueError(f"Constraint function {constraint_name} has an unexpected number of arguments.")
 
                 if favours_winner:
-                    self.tableWidget_2.setItem(i, j, QTableWidgetItem("Winner"))
+                    self.tableWidget_WL.setItem(i, j, QTableWidgetItem("Winner"))
                 else:
-                    self.tableWidget_2.setItem(i, j, QTableWidgetItem("Loser"))
+                    self.tableWidget_WL.setItem(i, j, QTableWidgetItem("Loser"))
 
 
     def updateTable(self):
