@@ -24,7 +24,6 @@ class OTTableWindow(QMainWindow):
         mainLayout = QVBoxLayout()
         inputLayout = QHBoxLayout()
         constraintsLayout = QHBoxLayout()
-        constraintsLayout.addStretch()
 
         # Input fields for words
         self.inputWord = QLineEdit(self)
