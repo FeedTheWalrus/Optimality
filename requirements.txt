@@ -36,6 +36,7 @@ PyQt5-sip==12.13.0
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 pytz==2024.1
+QDarkStyle==3.2.3
 requests==2.31.0
 simple-websocket==0.10.1
 simplejson==3.19.1
