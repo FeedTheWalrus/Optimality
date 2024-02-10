@@ -1,5 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QPushButton, QLineEdit, QVBoxLayout, QWidget, QLabel, QCheckBox, QHBoxLayout, QComboBox, QGridLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QPushButton, QLineEdit, QVBoxLayout, QWidget, QLabel, QCheckBox, QHBoxLayout, QComboBox, QGridLayout, QRadioButton, QButtonGroup
+from PyQt5 import QtGui
 import constraints
 import inspect
 import qdarkstyle
@@ -7,6 +8,7 @@ import qdarkstyle
 class OTTableWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        
         
         self.constraints = [func.__name__ for func in constraints.get_constraint_functions()]
         self.words = []  # To store input-output word pairs
@@ -17,7 +19,7 @@ class OTTableWindow(QMainWindow):
 
 
     def initUI(self):
-        self.setWindowTitle('OT Violation Chart')
+        self.setWindowTitle('Optimality Chart')
         self.setGeometry(200, 100, 1000, 500)
 
         # Layouts
@@ -111,44 +113,47 @@ class OTTableWindow(QMainWindow):
 
     def updateWLTable(self):
         # Set table dimensions
-        self.tableWidget_WL.setRowCount(len(self.outputWords))
-        self.tableWidget_WL.setColumnCount(len(self.selected_constraints) + 2)  # Additional columns for input and output words
+        self.tableWidget_WL.setRowCount(len(self.outputWords) - 1)  # Exclude the winner word
+        self.tableWidget_WL.setColumnCount(len(self.selected_constraints) + 2)  # Additional columns for Winner and Loser
 
         # Set table headers
         headers = ["Winner", "Loser"] + self.selected_constraints
         self.tableWidget_WL.setHorizontalHeaderLabels(headers)
 
         selected_winner = self.winnerSelection.currentText()
+        loser_words = [word for word in self.outputWords if word != selected_winner]
 
-        for i, output_word in enumerate(self.outputWords):
-            if output_word == selected_winner:
-                winner_label = "Winner"
-            else:
-                winner_label = "Loser"
+        row = 0
+        for loser_word in loser_words:
+            # Set Winner and Loser words in each row
+            self.tableWidget_WL.setItem(row, 0, QTableWidgetItem(selected_winner))
+            self.tableWidget_WL.setItem(row, 1, QTableWidgetItem(loser_word))
 
-            self.tableWidget_WL.setItem(i, 0, QTableWidgetItem(winner_label))
-            self.tableWidget_WL.setItem(i, 1, QTableWidgetItem(output_word))
-
-            # Determine whether the constraint favours the winner (input) or loser (output), for each constraint
+            # Compare each constraint against Winner and Loser
             for j, constraint_name in enumerate(self.selected_constraints, start=2):
-                # Retrieve the function object using its name
                 constraint_func = getattr(constraints, constraint_name)
-
-                # Check the number of arguments the constraint function expects
                 num_args = len(inspect.signature(constraint_func).parameters)
 
-                # Call the constraint function with the correct number of arguments
                 if num_args == 1:
-                    favours_winner = constraint_func(output_word)
+                    favours_winner = constraint_func(selected_winner)
+                    favours_loser = constraint_func(loser_word)
                 elif num_args == 2:
-                    favours_winner = constraint_func(self.inputWords, output_word)
+                    favours_winner = constraint_func(self.inputWords, selected_winner)
+                    favours_loser = constraint_func(self.inputWords, loser_word)
                 else:
                     raise ValueError(f"Constraint function {constraint_name} has an unexpected number of arguments.")
 
-                if favours_winner:
-                    self.tableWidget_WL.setItem(i, j, QTableWidgetItem("Winner"))
+                if favours_winner and not favours_loser:
+                    self.tableWidget_WL.setItem(row, j, QTableWidgetItem("Winner"))
+                    self.tableWidget_WL.item(row, j).setBackground(QtGui.QColor(0, 255, 0))  # Green for Winner
+                elif not favours_winner and favours_loser:
+                    self.tableWidget_WL.setItem(row, j, QTableWidgetItem("Loser"))
+                    self.tableWidget_WL.item(row, j).setBackground(QtGui.QColor(255, 0, 0))  # Red for Loser
                 else:
-                    self.tableWidget_WL.setItem(i, j, QTableWidgetItem("Loser"))
+                    self.tableWidget_WL.setItem(row, j, QTableWidgetItem("E"))
+
+
+            row += 1
 
 
     def updateTable(self):
