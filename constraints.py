@@ -118,43 +118,43 @@ def noDeleteConsonant(input_word, output_word):
     
     return input_consonant_count == output_consonant_count
 
-@constraint
-def noSkippingIPA(input_word, output_word): 
-    '''
-    This function is currently not tested! 
-    I'm unsure if it works correctly, especially within the context of the assignment.
-    It might technically be more accurate than noSkipping(), if you're really looking for
-    the phonetically correct answer. However, its probably easier to just use noSkipping()
-    until we full understand what the NoSkipping constraint actually requires.
-    '''
+# @constraint
+# def noSkippingIPA(input_word, output_word): 
+#     '''
+#     This function is currently not tested! 
+#     I'm unsure if it works correctly, especially within the context of the assignment.
+#     It might technically be more accurate than noSkipping(), if you're really looking for
+#     the phonetically correct answer. However, its probably easier to just use noSkipping()
+#     until we full understand what the NoSkipping constraint actually requires.
+#     '''
     
-    # Convert words to their IPA representations
-    input_ipa = e2i.convert(input_word)
-    output_ipa = e2i.convert(output_word)
-    print(f"Input: {input_ipa}")
-    print(f"Output: {output_ipa}")
+#     # Convert words to their IPA representations
+#     input_ipa = e2i.convert(input_word)
+#     output_ipa = e2i.convert(output_word)
+#     print(f"Input: {input_ipa}")
+#     print(f"Output: {output_ipa}")
 
-    # Convert IPA strings to lists of individual phonetic elements
-    # This is necessary to correctly handle multi-character IPA symbols
-    input_ipa_list = list(input_ipa)
-    output_ipa_list = list(output_ipa)
-    print(f"Input: {input_ipa_list}")
-    print(f"Output: {output_ipa_list}")
+#     # Convert IPA strings to lists of individual phonetic elements
+#     # This is necessary to correctly handle multi-character IPA symbols
+#     input_ipa_list = list(input_ipa)
+#     output_ipa_list = list(output_ipa)
+#     print(f"Input: {input_ipa_list}")
+#     print(f"Output: {output_ipa_list}")
 
-    i, j = 0, 0
-    while i < len(input_ipa_list) and j < len(output_ipa_list):
-        print(f"Comparing {input_ipa_list[i]} with {output_ipa_list[j]}")
-        if input_ipa_list[i] == output_ipa_list[j]:
-            j += 1
-        elif i > 0 and i < len(input_ipa_list) - 1 and input_ipa_list[i - 1] == output_ipa_list[j - 1] and input_ipa_list[i + 1] == output_ipa_list[j]:
-            # Adjacent character found, thus violating the constraint
-            print(f"Adjacent characters found at index {i} in {input_ipa} and index {j} in {output_ipa}")
-            return False
-        i += 1
+#     i, j = 0, 0
+#     while i < len(input_ipa_list) and j < len(output_ipa_list):
+#         print(f"Comparing {input_ipa_list[i]} with {output_ipa_list[j]}")
+#         if input_ipa_list[i] == output_ipa_list[j]:
+#             j += 1
+#         elif i > 0 and i < len(input_ipa_list) - 1 and input_ipa_list[i - 1] == output_ipa_list[j - 1] and input_ipa_list[i + 1] == output_ipa_list[j]:
+#             # Adjacent character found, thus violating the constraint
+#             print(f"Adjacent characters found at index {i} in {input_ipa} and index {j} in {output_ipa}")
+#             return False
+#         i += 1
 
-    # If the entire output_word is checked
-    print(f"Entire output_word checked")
-    return j == len(output_ipa_list)
+#     # If the entire output_word is checked
+#     print(f"Entire output_word checked")
+#     return j == len(output_ipa_list)
 
 @constraint
 def noSkipping(input_word, output_word):

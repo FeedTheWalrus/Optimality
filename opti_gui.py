@@ -1,9 +1,17 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QPushButton, QLineEdit, QVBoxLayout, QWidget, QLabel, QCheckBox, QHBoxLayout, QComboBox, QGridLayout, QRadioButton, QButtonGroup
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QTableWidget, QTableWidgetItem, 
+                             QPushButton, QLineEdit, QVBoxLayout, QWidget, 
+                             QLabel, QCheckBox, QHBoxLayout, QComboBox, 
+                             QGridLayout, QRadioButton, QSizePolicy, QSpacerItem
+                            )
 from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
 import constraints
 import inspect
 import qdarkstyle
+
+default_input = 'snow'
+default_output = ['snow', 'sno', 'sow', 'so', 'no']
 
 class OTTableWindow(QMainWindow):
     def __init__(self):
@@ -13,38 +21,71 @@ class OTTableWindow(QMainWindow):
         self.constraints = [func.__name__ for func in constraints.get_constraint_functions()]
         self.words = []  # To store input-output word pairs
         self.selected_constraints = []  # To store selected constraints
-        self.inputWords = 'snow' # To store input word
-        self.outputWords = ['snow', 'sno', 'sow', 'so', 'no']
+        self.inputWords = default_input
+        self.outputWords = default_output
         self.initUI()
 
 
     def initUI(self):
         self.setWindowTitle('Optimality Chart')
-        self.setGeometry(200, 100, 1000, 500)
+        self.setGeometry(200, 100, 1000, 800)
 
+        # Horizontal Layout for input and constraints
+        topLayout = QHBoxLayout()
         # Layouts
         mainLayout = QVBoxLayout()
-        inputLayout = QHBoxLayout()
-        constraintsLayout = QHBoxLayout()
+        inputLayout = QVBoxLayout()
+        constraintsLayout = QGridLayout()
+        
 
         # Input fields for words
         self.inputWord = QLineEdit(self)
         self.outputWord = QLineEdit(self)
         inputLayout.addWidget(QLabel("Input Word:"))
         inputLayout.addWidget(self.inputWord)
+        self.inputWord.setFixedWidth(200)
         inputLayout.addWidget(QLabel("Output Word:"))
         inputLayout.addWidget(self.outputWord)
+        self.outputWord.setFixedWidth(200)
 
         # Add Word button
         addWordButton = QPushButton("Add Word Pair", self)
         addWordButton.clicked.connect(self.addWordPair)
         inputLayout.addWidget(addWordButton)
+        addWordButton.setFixedWidth(200)
 
-        # Constraint checkboxes
-        for constraint_name in self.constraints:
+        row, col = 0, 0
+        max_cols = 2
+        max_rows = 6
+        # Constraint checkboxes. Start activated.
+        for i, constraint_name in enumerate(self.constraints):
             checkBox = QCheckBox(constraint_name, self)
             checkBox.stateChanged.connect(self.updateSelectedConstraints)
-            constraintsLayout.addWidget(checkBox)
+            checkBox.setMaximumWidth(115)
+            # set alignment to left
+
+            constraintsLayout.addWidget(checkBox, row, col, 1,1, Qt.AlignLeft)
+
+            row += 1
+            if row >= max_rows:
+                row = 0
+                col += 1
+
+            # col += 1
+            # if col >= max_cols:
+            #     col = 0
+            #     row += 1
+
+        constraintsLayout.setHorizontalSpacing(30)
+        constraintsLayout.setVerticalSpacing(10)
+        constraintsLayout.setColumnMinimumWidth(1, 10)
+
+        topLayout.addLayout(inputLayout, 0)
+        topLayout.addLayout(constraintsLayout, 0)
+        
+        # add spacer
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        topLayout.addItem(spacerItem)
 
         # Table for showing data
         self.tableWidget = QTableWidget(self)
@@ -54,28 +95,31 @@ class OTTableWindow(QMainWindow):
         self.winnerSelection = QComboBox(self)
         self.winnerSelection.addItems(self.outputWords)
         self.winnerSelection.currentIndexChanged.connect(self.updateWLTable)
-        inputLayout.addWidget(QLabel("Select Winner:"))
-        inputLayout.addWidget(self.winnerSelection)
+        # Change size of dropdown
+        self.winnerSelection.setFixedWidth(200)
 
         # Table for Winners/Losers table
         self.tableWidget_WL = QTableWidget(self)
         self.updateWLTable()
 
         # Update Table button
-        updateTableButton = QPushButton("Update Table", self)
+        updateTableButton = QPushButton("Update Tables", self)
         updateTableButton.clicked.connect(self.updateTable)
+        updateTableButton.setFixedWidth(200)
 
         # Clear Table button
-        clearTableButton = QPushButton("Clear Table", self)
+        clearTableButton = QPushButton("Clear Tables", self)
         clearTableButton.clicked.connect(self.clearTable)
+        clearTableButton.setFixedWidth(200)
 
         # Add widgets to layout
-        mainLayout.addLayout(inputLayout)
-        mainLayout.addLayout(constraintsLayout)
+        mainLayout.addLayout(topLayout)
         mainLayout.addWidget(updateTableButton)
-        mainLayout.addWidget(self.tableWidget)
-        mainLayout.addWidget(self.tableWidget_WL)
         mainLayout.addWidget(clearTableButton)
+        mainLayout.addWidget(self.tableWidget)
+        mainLayout.addWidget(QLabel("Select Winner:"))
+        mainLayout.addWidget(self.winnerSelection)
+        mainLayout.addWidget(self.tableWidget_WL)
 
         # Set the layout
         container = QWidget()
@@ -83,7 +127,14 @@ class OTTableWindow(QMainWindow):
         self.setCentralWidget(container)
 
     def addWordPair(self):
+        input_word = self.inputWord.text()
         output_word = self.outputWord.text()
+        if input_word:
+            self.inputWords = input_word
+        #check if input word is in output word list. If not, add it to first index
+        if input_word not in self.outputWords:
+            self.outputWords.insert(0, input_word)
+
         if output_word:
             self.outputWords.append(output_word)  # Use the correct variable name
             self.outputWord.clear()
@@ -104,11 +155,14 @@ class OTTableWindow(QMainWindow):
         self.updateWLTable()
 
     def clearTable(self):
+        #clear default words
+        self.inputWords = ''
+        self.outputWords = []
+
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
         self.tableWidget_WL.clearContents()
         self.tableWidget_WL.setRowCount(0)
-        self.output_words = []
     
 
     def updateWLTable(self):
@@ -117,7 +171,7 @@ class OTTableWindow(QMainWindow):
         self.tableWidget_WL.setColumnCount(len(self.selected_constraints) + 2)  # Additional columns for Winner and Loser
 
         # Set table headers
-        headers = ["Winner", "Loser"] + self.selected_constraints
+        headers = ["Selected Winner", "Loser"] + self.selected_constraints
         self.tableWidget_WL.setHorizontalHeaderLabels(headers)
 
         selected_winner = self.winnerSelection.currentText()
