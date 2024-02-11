@@ -26,6 +26,7 @@ Open a terminal/command prompt and navigate to the folder you'd like to download
 
 #### Step 3: Install requirements.
 > cd Optimality
+
 > pip install -r requirements.txt 
 
 Sometimes that doesn't work and you may need to run the command as a pip3 command:
