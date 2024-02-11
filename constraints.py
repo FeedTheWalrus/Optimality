@@ -5,6 +5,7 @@
 # The final section uses Recursive Constraint Demotion to rank Constraints into Stratas
 
 import eng_to_ipa as e2i
+import inspect
 
 # Static Variables
 consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 
@@ -305,6 +306,65 @@ def gather_input_words():
     
     return input_words
 
+def recursive_constraint_demotion(candidates, constraints, stratum_count=2):
+    """
+    Applies Recursive Constraint Demotion (RCD) algorithm to determine the rankings of constraints.
+    The constraints are placed into stratums based on their ranking.
+
+    Args:
+        candidates (list of tuples): A list of candidate outputs for a given input. Each tuple
+                                     consists of the input word and its candidate output.
+        constraints (list of functions): A list of constraint functions that evaluate each candidate.
+        stratum_count (int): The total number of stratums to distribute constraints into.
+
+    Returns:
+        list of lists: A list containing 'stratum_count' number of lists, each representing a stratum
+                       and containing the constraints ranked at that level.
+    """
+    def violates(constraint, candidate):
+        """
+        Check if the candidate violates the constraint, considering the expected number of parameters of the constraint.
+        """
+        input_word, output_word = candidate
+        params = inspect.signature(constraint).parameters
+        if len(params) == 1:
+            # Constraint expects only the output word
+            return constraint(output_word)
+        elif len(params) == 2:
+            # Constraint expects both the input and output words
+            return constraint(input_word, output_word)
+        else:
+            raise ValueError("Constraint function must take either 1 or 2 arguments.")
+
+    def is_dominated(constraint, candidates, undominated_constraints):
+        """
+        Check if the constraint is dominated by checking if there is any candidate that
+        does not violate any of the other undominated constraints but violates this one.
+        """
+        for candidate in candidates:
+            if not any(violates(uc, candidate) for uc in undominated_constraints) and violates(constraint, candidate):
+                return True
+        return False
+
+    # Initialize list of stratums
+    stratums = [[] for _ in range(stratum_count)]
+    undominated_constraints = set(constraints)
+    current_stratum = 0
+
+    # Perform RCD algorithm
+    while undominated_constraints and current_stratum < stratum_count:
+        for constraint in list(undominated_constraints):
+            if not is_dominated(constraint, candidates, undominated_constraints - {constraint}):
+                stratums[current_stratum].append(constraint)
+                undominated_constraints.remove(constraint)
+        current_stratum += 1
+
+    # If there are still undominated constraints left after filling all stratums, place them in the last stratum
+    if undominated_constraints:
+        stratums[-1].extend(undominated_constraints)
+
+    return stratums
+
 # if run as _main_
 
 test_cases = [
@@ -317,6 +377,13 @@ test_cases = [
 ]
 
 if __name__ == "__main__":
+
+    # Assuming each pair in test_cases is an input word and its candidate output
+    test_candidates = [(input_word, output_word) for input_word, output_word in test_cases]
+    
+    # Test recursive constraint demotion with properly formatted candidates
+    print(recursive_constraint_demotion(test_candidates, get_constraint_functions(), 2))
+
 
     #test get constraint functions
     for func in get_constraint_functions():
